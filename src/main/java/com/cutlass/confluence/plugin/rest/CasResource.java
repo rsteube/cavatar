@@ -58,8 +58,8 @@ public class CasResource
     @GET
     @Path("server/{id}")
     public Response getUsersPlus(@PathParam("id") final String id, @QueryParam("s") @DefaultValue("48") final int size)
-    throws IOException
-    {
+        throws IOException
+        {
         log.debug("Image requested for email hash: " + id);
         log.debug("The requested size is: " + size + " x " + size);
         // final String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
@@ -70,7 +70,9 @@ public class CasResource
         NO_CACHE.setNoStore(true);
         NO_CACHE.setNoCache(true);
 
-        final String username = hashTranslator.getUsername(id.trim());
+        String hashString = id.split("\\.")[0];
+        log.error(hashString);
+        final String username = hashTranslator.getUsername(hashString.trim());
 
         log.debug("The user associated with the email hash is: " + username);
 
@@ -123,11 +125,11 @@ public class CasResource
 
         return Response.ok(bytes, ct).cacheControl(NO_CACHE).build();
 
-    }
+        }
 
     public byte[] scale(final BufferedImage image, final int inHorizontal, final int inVertical, final String avatarType)
-    throws IOException
-    {
+        throws IOException
+        {
 
         final double scaleFactor = getScaleFactor(image.getWidth(), image.getHeight(), inHorizontal, inVertical);
 
@@ -153,26 +155,26 @@ public class CasResource
         final byte[] resultImageAsRawBytes = baos.toByteArray();
         baos.close();
         return resultImageAsRawBytes;
+        }
+
+    public void setAttachmentManager(final AttachmentManager attachmentManagerParam)
+    {
+        attachmentManager = attachmentManagerParam;
     }
 
-    public void setAttachmentManager(final AttachmentManager attachmentManager)
+    public void setPersonalInformationManager(final PersonalInformationManager personalInformationManagerParam)
     {
-        this.attachmentManager = attachmentManager;
+        personalInformationManager = personalInformationManagerParam;
     }
 
-    public void setPersonalInformationManager(final PersonalInformationManager personalInformationManager)
+    public void setSettingsManager(final SettingsManager settingsManagerParam)
     {
-        this.personalInformationManager = personalInformationManager;
+        settingsManager = settingsManagerParam;
     }
 
-    public void setSettingsManager(final SettingsManager settingsManager)
+    public void setUserAccessor(final UserAccessor userAccessorParam)
     {
-        this.settingsManager = settingsManager;
-    }
-
-    public void setUserAccessor(final UserAccessor userAccessor)
-    {
-        this.userAccessor = userAccessor;
+        userAccessor = userAccessorParam;
     }
 
 }
