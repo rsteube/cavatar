@@ -10,13 +10,22 @@
 
     <resource type="download" name="0.gif" location="images/0.gif"> 
 		<param name="content-type" value="image/gif"/> 
-	</resource>
+    </resource>
+
+    <resource type="download" name="icon.jpg" location="images/icon.jpg">
+                <param name="content-type" value="image/jpeg"/>
+    </resource>
 
     <rest name="Confluence Avatar Server" key="cas" path="/cas" version="1.0">
         <description>Provides confluence avatars.</description>
     </rest>
     
-    <macro name="casdebuglist" class="com.cutlass.confluence.plugin.macro.CasDebugListMacro" key="casdebuglist">
+    <macro name="casdebuglist" class="com.cutlass.confluence.plugin.macro.CasDebugListMacro" key="casdebuglist" 
+		icon="/download/resources/com.cutlass.confluence.plugin.rest.cas:cas/icon.jpg"
+		documentation-url="https://plugins.atlassian.com/plugin/details/19488">
         <description>Show the users and their hashes</description>
+	<category name="confluence-content"/>
+	<parameters>
+	</parameters>
     </macro>
 </atlassian-plugin>

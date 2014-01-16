@@ -71,7 +71,6 @@ public class CasResource
         NO_CACHE.setNoCache(true);
 
         String hashString = id.split("\\.")[0];
-        log.error(hashString);
         final String username = hashTranslator.getUsername(hashString.trim());
 
         log.debug("The user associated with the email hash is: " + username);
