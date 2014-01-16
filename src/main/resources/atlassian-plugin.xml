@@ -8,7 +8,15 @@
         <vendor name="Justin Shapiro" />
     </plugin-info>
 
+    <resource type="download" name="0.gif" location="images/0.gif"> 
+		<param name="content-type" value="image/gif"/> 
+	</resource>
+
     <rest name="Confluence Avatar Server" key="cas" path="/cas" version="1.0">
         <description>Provides confluence avatars.</description>
     </rest>
+    
+    <macro name="casdebuglist" class="com.cutlass.confluence.plugin.macro.CasDebugListMacro" key="casdebuglist">
+        <description>Show the users and their hashes</description>
+    </macro>
 </atlassian-plugin>

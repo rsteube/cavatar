@@ -7,14 +7,10 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -31,6 +27,7 @@ import com.atlassian.confluence.setup.settings.SettingsManager;
 import com.atlassian.confluence.user.PersonalInformation;
 import com.atlassian.confluence.user.PersonalInformationManager;
 import com.atlassian.confluence.user.UserAccessor;
+import com.atlassian.core.filters.ServletContextThreadLocal;
 import com.atlassian.plugins.rest.common.security.AnonymousAllowed;
 import com.atlassian.user.User;
 
@@ -95,26 +92,8 @@ public class CasResource
         }
         else
         {
-            final String avatarURL = baseUrl + filepath;
-            final URL url = new URL(avatarURL);
-
-            if (url.getProtocol().equalsIgnoreCase("https"))
-            {
-                final HttpsURLConnection httpsCon = (HttpsURLConnection)url.openConnection();
-                httpsCon.setHostnameVerifier(new HostnameVerifier()
-                {
-                    public boolean verify(final String hostname, final SSLSession session)
-                    {
-                        return true;
-                    }
-                });
-                httpsCon.connect();
-                image = ImageIO.read(httpsCon.getInputStream());
-            }
-            else
-            {
-                image = ImageIO.read(url.openStream());
-            }
+            image = ImageIO.read(ServletContextThreadLocal.getContext().getResourceAsStream(filepath));
+                    
             final int dotPos = filename.lastIndexOf(".");
             final String fileExtension = filename.substring(dotPos + 1);
             ct = "image/" + fileExtension;

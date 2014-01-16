@@ -39,7 +39,7 @@ public final class HashTranslator
         populateTranslation();
     }
 
-    private String getEmailHash(final String email) {
+    public String getEmailHash(final String email) {
         String emailHash = null;
 
         if (email != null) {
@@ -89,6 +89,11 @@ public final class HashTranslator
 
         }
 
+    }
+
+    public Map<String, String> getTranslation()
+    {
+        return translation;
     }
 
 }
