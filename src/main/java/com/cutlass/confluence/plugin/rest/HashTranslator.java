@@ -43,22 +43,27 @@ public final class HashTranslator
         String emailHash = null;
 
         if (email != null) {
-                try {
-                    final MessageDigest md = MessageDigest.getInstance("MD5");
-                    final byte[] input = md.digest(email.trim().getBytes("CP1252"));
-                    final StringBuffer sb = new StringBuffer();
-                    for (int i = 0; i < input.length; ++i) {
-                        sb.append(Integer.toHexString((input[i] & 0xFF) | 0x100).substring(1,3));
-                    }
-                    emailHash = sb.toString();
-                } catch (final NoSuchAlgorithmException nsae) {
-                    log.warn("Unable to generate gravatar ID for email '" + email + "'."  + nsae);
-                } catch (final UnsupportedEncodingException uee) {
-                    log.warn("Unable to generate gravatar ID for email '" + email + "'."  + uee);
+            try {
+                final MessageDigest md = MessageDigest.getInstance("MD5");
+                final byte[] input = md.digest(email.trim().getBytes("CP1252"));
+                final StringBuffer sb = new StringBuffer();
+                for (int i = 0; i < input.length; ++i) {
+                    sb.append(Integer.toHexString((input[i] & 0xFF) | 0x100).substring(1,3));
                 }
+                emailHash = sb.toString();
+            } catch (final NoSuchAlgorithmException nsae) {
+                log.warn("Unable to generate gravatar ID for email '" + email + "'."  + nsae);
+            } catch (final UnsupportedEncodingException uee) {
+                log.warn("Unable to generate gravatar ID for email '" + email + "'."  + uee);
+            }
         }
 
         return emailHash;
+    }
+
+    public Map<String, String> getTranslation()
+    {
+        return translation;
     }
 
     public String getUsername(final String emailhash)
@@ -76,24 +81,24 @@ public final class HashTranslator
             username = "anonymous";
         }
 
+        log.debug("The username found for the requested email hash (" + emailhash + ") is " + username);
         return username;
     }
 
     private void populateTranslation()
     {
 
-        for (final Object element : PagerUtils.toList(userAccessor.getUsers()))
+        for (final User user : PagerUtils.toList(userAccessor.getUsers()))
         {
-            final User user = (User)element;
-            translation.put(getEmailHash(user.getEmail().toLowerCase()), user.getName());
-
+            if (user != null && TextUtils.stringSet(user.getEmail()) && TextUtils.stringSet(user.getName()))
+            {
+                final String emailHash = getEmailHash(user.getEmail().toLowerCase());
+                final String username = user.getName();
+                log.debug("The email hash for " + username + " is " + emailHash);
+                translation.put(getEmailHash(user.getEmail().toLowerCase()), user.getName());
+            }
         }
 
-    }
-
-    public Map<String, String> getTranslation()
-    {
-        return translation;
     }
 
 }

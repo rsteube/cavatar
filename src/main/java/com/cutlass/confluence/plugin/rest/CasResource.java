@@ -27,6 +27,7 @@ import com.atlassian.confluence.setup.settings.SettingsManager;
 import com.atlassian.confluence.user.PersonalInformation;
 import com.atlassian.confluence.user.PersonalInformationManager;
 import com.atlassian.confluence.user.UserAccessor;
+import com.atlassian.confluence.user.actions.ProfilePictureInfo;
 import com.atlassian.core.filters.ServletContextThreadLocal;
 import com.atlassian.plugins.rest.common.security.AnonymousAllowed;
 import com.atlassian.user.User;
@@ -56,12 +57,13 @@ public class CasResource
 
     @GET
     @Path("server/{id}")
-    public Response getUsersPlus(@PathParam("id")
-    final String id, @QueryParam("s")
-    @DefaultValue("48")
-    final int size) throws IOException
+    public Response getUsersPlus(@PathParam("id") final String id, @QueryParam("s") @DefaultValue("48") final int size)
+    throws IOException
     {
-        final String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
+        log.debug("Image requested for email hash: " + id);
+        log.debug("The requested size is: " + size + " x " + size);
+        // final String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
+
         final HashTranslator hashTranslator = HashTranslator.getInstance();
 
         final CacheControl NO_CACHE = new CacheControl();
@@ -69,17 +71,23 @@ public class CasResource
         NO_CACHE.setNoCache(true);
 
         final String username = hashTranslator.getUsername(id.trim());
+
+        log.debug("The user associated with the email hash is: " + username);
+
         final User user = userAccessor.getUser(username);
 
-        final String filepath = userAccessor.getUserProfilePicture(user).getDownloadPath();
-        final String filename = userAccessor.getUserProfilePicture(user).getFileName();
+        final ProfilePictureInfo profilePictureInfo = userAccessor.getUserProfilePicture(user);
+        final String filepath = profilePictureInfo.getDownloadPath();
+        final String filename = profilePictureInfo.getFileName();
 
         String ct;
 
         BufferedImage image;
 
-        if (filepath.contains("attachments"))
+        if (profilePictureInfo.isUploaded())
         {
+            log.debug("The user's profile picture was uploaded");
+            log.debug("The filepath is: " + filepath);
             final PersonalInformation pi = personalInformationManager.getPersonalInformation(user);
             final Attachment attachment = attachmentManager.getAttachment(pi, filename);
             image = ImageIO.read(attachment.getContentsAsStream());
@@ -92,21 +100,33 @@ public class CasResource
         }
         else
         {
+            log.debug("The user's profile picture was not uploaded");
+            log.debug("The filepath is: " + filepath);
             image = ImageIO.read(ServletContextThreadLocal.getContext().getResourceAsStream(filepath));
-                    
+
             final int dotPos = filename.lastIndexOf(".");
             final String fileExtension = filename.substring(dotPos + 1);
             ct = "image/" + fileExtension;
         }
 
-        final byte[] bytes = scale(image, size, size, ct);
+        byte[] bytes = null;
+        if (image != null)
+        {
+            log.debug("The image was found and is being scaled appropriatly");
+            bytes = scale(image, size, size, ct);
+            log.debug("The image has been scaled");
+        }
+        else
+        {
+            log.debug("The image was not found");
+        }
 
         return Response.ok(bytes, ct).cacheControl(NO_CACHE).build();
 
     }
 
     public byte[] scale(final BufferedImage image, final int inHorizontal, final int inVertical, final String avatarType)
-        throws IOException
+    throws IOException
     {
 
         final double scaleFactor = getScaleFactor(image.getWidth(), image.getHeight(), inHorizontal, inVertical);
@@ -122,7 +142,7 @@ public class CasResource
         hintMap.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 
         hintMap.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        //hintMap.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        // hintMap.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
         final AffineTransformOp op = new AffineTransformOp(AffineTransform.getScaleInstance(scaleFactor, scaleFactor),
             new RenderingHints(hintMap));

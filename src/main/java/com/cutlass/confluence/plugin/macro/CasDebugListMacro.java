@@ -24,7 +24,7 @@ public class CasDebugListMacro extends BaseMacro
 
         final User remoteUser = AuthenticatedUserThreadLocal.getUser();
 
-        final Map contextMap = MacroUtils.defaultVelocityContext();
+        final Map<String, Object> contextMap = MacroUtils.defaultVelocityContext();
 
         final HashTranslator translator = HashTranslator.getInstance();
 
