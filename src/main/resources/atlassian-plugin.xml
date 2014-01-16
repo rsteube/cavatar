@@ -1,0 +1,14 @@
+<atlassian-plugin key="${atlassian.plugin.key}" name="Confluence Avatar Server" plugins-version="2">
+    <plugin-info>
+        <description>
+            This plugin returns a users avatar like gravatar for use
+            with fisheye
+        </description>
+        <version>${project.version}</version>
+        <vendor name="Justin Shapiro" />
+    </plugin-info>
+
+    <rest name="Confluence Avatar Server" key="cas" path="/cas" version="1.0">
+        <description>Provides confluence avatars.</description>
+    </rest>
+</atlassian-plugin>
