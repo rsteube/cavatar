@@ -35,26 +35,34 @@ public final class HashTranslator
 
     private HashTranslator()
     {
-        userAccessor = (UserAccessor) ContainerManager.getInstance().getContainerContext().getComponent("userAccessor");
+        userAccessor = (UserAccessor)ContainerManager.getInstance().getContainerContext().getComponent("userAccessor");
         populateTranslation();
     }
 
-    public String getEmailHash(final String email) {
+    public String getEmailHash(final String email)
+    {
         String emailHash = null;
 
-        if (email != null) {
-            try {
+        if (email != null)
+        {
+            try
+            {
                 final MessageDigest md = MessageDigest.getInstance("MD5");
                 final byte[] input = md.digest(email.trim().getBytes("CP1252"));
                 final StringBuffer sb = new StringBuffer();
-                for (int i = 0; i < input.length; ++i) {
-                    sb.append(Integer.toHexString((input[i] & 0xFF) | 0x100).substring(1,3));
+                for (int i = 0; i < input.length; ++i)
+                {
+                    sb.append(Integer.toHexString((input[i] & 0xFF) | 0x100).substring(1, 3));
                 }
                 emailHash = sb.toString();
-            } catch (final NoSuchAlgorithmException nsae) {
-                log.warn("Unable to generate gravatar ID for email '" + email + "'."  + nsae);
-            } catch (final UnsupportedEncodingException uee) {
-                log.warn("Unable to generate gravatar ID for email '" + email + "'."  + uee);
+            }
+            catch (final NoSuchAlgorithmException nsae)
+            {
+                log.warn("Unable to generate gravatar ID for email '" + email + "'." + nsae);
+            }
+            catch (final UnsupportedEncodingException uee)
+            {
+                log.warn("Unable to generate gravatar ID for email '" + email + "'." + uee);
             }
         }
 
@@ -69,11 +77,6 @@ public final class HashTranslator
     public String getUsername(final String emailhash)
     {
 
-        if (translation.keySet().size() != PagerUtils.toList(userAccessor.getUsers()).size())
-        {
-            populateTranslation();
-        }
-
         String username = translation.get(emailhash);
 
         if (!TextUtils.stringSet(username))
@@ -85,7 +88,7 @@ public final class HashTranslator
         return username;
     }
 
-    private void populateTranslation()
+    public void populateTranslation()
     {
 
         for (final User user : PagerUtils.toList(userAccessor.getUsers()))

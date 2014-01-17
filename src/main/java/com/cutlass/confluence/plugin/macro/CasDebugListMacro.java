@@ -6,6 +6,7 @@ import com.atlassian.confluence.renderer.radeox.macros.MacroUtils;
 import com.atlassian.confluence.security.PermissionManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.util.velocity.VelocityUtils;
+import com.atlassian.plugin.webresource.WebResourceManager;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
@@ -13,14 +14,17 @@ import com.atlassian.renderer.v2.macro.MacroException;
 import com.atlassian.user.User;
 import com.cutlass.confluence.plugin.rest.HashTranslator;
 
-
 public class CasDebugListMacro extends BaseMacro
 {
 
     PermissionManager permissionManager;
 
+    WebResourceManager webResourceManager;
+
     public String execute(final Map arg0, final String arg1, final RenderContext arg2) throws MacroException
     {
+
+        webResourceManager.requireResource("com.cutlass.confluence.plugin.rest.cas:resources");
 
         final User remoteUser = AuthenticatedUserThreadLocal.getUser();
 
@@ -49,6 +53,11 @@ public class CasDebugListMacro extends BaseMacro
     public void setPermissionManager(final PermissionManager permissionManager)
     {
         this.permissionManager = permissionManager;
+    }
+
+    public void setWebResourceManager(final WebResourceManager webResourceManager)
+    {
+        this.webResourceManager = webResourceManager;
     }
 
 }

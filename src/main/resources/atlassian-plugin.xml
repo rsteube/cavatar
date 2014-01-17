@@ -8,6 +8,8 @@
         <vendor name="Justin Shapiro" />
     </plugin-info>
 
+    <resource type="i18n" name="i18n" location="properties/caspluginprops" />
+
     <resource type="download" name="0.gif" location="images/0.gif"> 
 		<param name="content-type" value="image/gif"/> 
     </resource>
@@ -15,6 +17,11 @@
     <resource type="download" name="icon.jpg" location="images/icon.jpg">
                 <param name="content-type" value="image/jpeg"/>
     </resource>
+
+    <web-resource name="Resources" key="resources">
+        <resource name="cavatar.css" type="download" location="css/cavatar.css"/>
+        <context>atl.general</context>
+    </web-resource>
 
     <rest name="Confluence Avatar Server" key="cas" path="/cas" version="1.0">
         <description>Provides confluence avatars.</description>
@@ -28,4 +35,12 @@
 	<parameters>
 	</parameters>
     </macro>
+    
+    <job key="casJob" name="CAS Job" class="com.cutlass.confluence.plugin.job.PopulateMapJob" />
+    <trigger key="casTrigger" name="CAS Trigger">       
+        <job key="casJob" />       
+        <schedule cron-expression="0 0 0 ? * 1 *" />     
+        <managed editable="true" keepingHistory="true" canRunAdhoc="true" canDisable="true" />
+    </trigger>
+    
 </atlassian-plugin>
