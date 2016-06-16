@@ -78,38 +78,16 @@ public class CasResource
         final User user = userAccessor.getUser(username);
 
         final ProfilePictureInfo profilePictureInfo = userAccessor.getUserProfilePicture(user);
-        final String filepath = profilePictureInfo.getDownloadPath();
-        final String filename = profilePictureInfo.getFileName();
-
-        String ct;
-
-        BufferedImage image;
-
-        if (profilePictureInfo.isUploaded())
+        
+        String ct = profilePictureInfo.getContentType();
+        
+        if (ct.equals("image/pjpeg"))
         {
-            log.debug("The user's profile picture was uploaded");
-            log.debug("The filepath is: " + filepath);
-            final PersonalInformation pi = personalInformationManager.getPersonalInformation(user);
-            final Attachment attachment = attachmentManager.getAttachment(pi, filename);
-            image = ImageIO.read(attachment.getContentsAsStream());
-            ct = attachment.getContentType();
-
-            if (ct.equals("image/pjpeg"))
-            {
-                ct = "image/jpeg";
-            }
+            ct = "image/jpeg";
         }
-        else
-        {
-            log.debug("The user's profile picture was not uploaded");
-            log.debug("The filepath is: " + filepath);
-            image = ImageIO.read(ServletContextThreadLocal.getContext().getResourceAsStream(filepath));
-
-            final int dotPos = filename.lastIndexOf(".");
-            final String fileExtension = filename.substring(dotPos + 1);
-            ct = "image/" + fileExtension;
-        }
-
+            
+        BufferedImage image = ImageIO.read(profilePictureInfo.getBytes());
+        
         byte[] bytes = null;
         if (image != null)
         {
