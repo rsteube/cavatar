@@ -7,6 +7,7 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,14 +22,11 @@ import javax.ws.rs.core.Response;
 
 import org.apache.log4j.Logger;
 
-import com.atlassian.confluence.pages.Attachment;
 import com.atlassian.confluence.pages.AttachmentManager;
 import com.atlassian.confluence.setup.settings.SettingsManager;
-import com.atlassian.confluence.user.PersonalInformation;
 import com.atlassian.confluence.user.PersonalInformationManager;
 import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.confluence.user.actions.ProfilePictureInfo;
-import com.atlassian.core.filters.ServletContextThreadLocal;
 import com.atlassian.plugins.rest.common.security.AnonymousAllowed;
 import com.atlassian.user.User;
 
@@ -57,9 +55,11 @@ public class CasResource
 
     @GET
     @Path("server/{id}")
-    public Response getUsersPlus(@PathParam("id") final String id, @QueryParam("s") @DefaultValue("48") final int size)
-        throws IOException
-        {
+    public Response getUsersPlus(@PathParam("id")
+    final String id, @QueryParam("s")
+    @DefaultValue("48")
+    final int size) throws IOException
+    {
         log.debug("Image requested for email hash: " + id);
         log.debug("The requested size is: " + size + " x " + size);
         // final String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
@@ -78,16 +78,25 @@ public class CasResource
         final User user = userAccessor.getUser(username);
 
         final ProfilePictureInfo profilePictureInfo = userAccessor.getUserProfilePicture(user);
-        
-        String ct = profilePictureInfo.getContentType();
-        
-        if (ct.equals("image/pjpeg"))
+
+        BufferedImage image = null;
+        String ct = "image/png";
+
+        if (profilePictureInfo.isDefault())
         {
-            ct = "image/jpeg";
+            InputStream defaultImage = getClass().getClassLoader().getResourceAsStream("/images/anonymous.png");
+            image = ImageIO.read(defaultImage);
         }
-            
-        BufferedImage image = ImageIO.read(profilePictureInfo.getBytes());
-        
+        else
+        {
+            image = ImageIO.read(profilePictureInfo.getBytes());
+            ct = profilePictureInfo.getContentType();
+            if (ct.equals("image/pjpeg"))
+            {
+                ct = "image/jpeg";
+            }
+        }
+
         byte[] bytes = null;
         if (image != null)
         {
@@ -102,16 +111,16 @@ public class CasResource
 
         return Response.ok(bytes, ct).cacheControl(NO_CACHE).build();
 
-        }
+    }
 
     public byte[] scale(final BufferedImage image, final int inHorizontal, final int inVertical, final String avatarType)
         throws IOException
-        {
+    {
 
         final double scaleFactor = getScaleFactor(image.getWidth(), image.getHeight(), inHorizontal, inVertical);
 
-        final BufferedImage image2 = new BufferedImage(image.getColorModel(), image.getRaster().createCompatibleWritableRaster(
-            inHorizontal, inVertical), image.isAlphaPremultiplied(), null);
+        final BufferedImage image2 = new BufferedImage(image.getColorModel(),
+            image.getRaster().createCompatibleWritableRaster(inHorizontal, inVertical), image.isAlphaPremultiplied(), null);
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -132,7 +141,7 @@ public class CasResource
         final byte[] resultImageAsRawBytes = baos.toByteArray();
         baos.close();
         return resultImageAsRawBytes;
-        }
+    }
 
     public void setAttachmentManager(final AttachmentManager attachmentManagerParam)
     {
