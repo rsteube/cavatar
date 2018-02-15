@@ -79,22 +79,11 @@ public class CasResource
 
         final ProfilePictureInfo profilePictureInfo = userAccessor.getUserProfilePicture(user);
 
-        BufferedImage image = null;
-        String ct = "image/png";
-
-        if (profilePictureInfo.isDefault())
+        BufferedImage image = ImageIO.read(profilePictureInfo.getBytes());
+        String ct = profilePictureInfo.getContentType();
+        if (ct.equals("image/pjpeg"))
         {
-            InputStream defaultImage = getClass().getClassLoader().getResourceAsStream("/images/anonymous.png");
-            image = ImageIO.read(defaultImage);
-        }
-        else
-        {
-            image = ImageIO.read(profilePictureInfo.getBytes());
-            ct = profilePictureInfo.getContentType();
-            if (ct.equals("image/pjpeg"))
-            {
-                ct = "image/jpeg";
-            }
+            ct = "image/jpeg";
         }
 
         byte[] bytes = null;
@@ -107,6 +96,10 @@ public class CasResource
         else
         {
             log.debug("The image was not found");
+            InputStream defaultImage = getClass().getClassLoader().getResourceAsStream("/images/anonymous.png");
+            image = ImageIO.read(defaultImage);
+            bytes = scale(image, size, size, "image/png");
+            log.debug("The anonymous image has been scaled");
         }
 
         return Response.ok(bytes, ct).cacheControl(NO_CACHE).build();
