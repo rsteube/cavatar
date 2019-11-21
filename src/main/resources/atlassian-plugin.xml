@@ -1,13 +1,9 @@
-<atlassian-plugin key="${atlassian.plugin.key}" name="Confluence Avatar Server" plugins-version="2">
+<atlassian-plugin key="${project.groupId}" name="${project.name}" plugins-version="2">
     <plugin-info>
-        <description>
-            This plugin returns a users avatar like gravatar for use with Fisheye/Crucible, Stash and Bamboo
-        </description>
+        <description>${project.description}</description>
         <version>${project.version}</version>
-        <vendor name="Justin Shapiro" />
+        <vendor name="${project.organization.name}" />
     </plugin-info>
-
-    <resource type="i18n" name="i18n" location="properties/caspluginprops" />
 
     <resource type="download" name="0.gif" location="images/0.gif"> 
 		<param name="content-type" value="image/gif"/> 
@@ -17,29 +13,7 @@
                 <param name="content-type" value="image/jpeg"/>
     </resource>
 
-    <web-resource name="Resources" key="resources">
-        <resource name="cavatar.css" type="download" location="css/cavatar.css"/>
-        <context>atl.general</context>
-    </web-resource>
-
-    <rest name="Confluence Avatar Server" key="cas" path="/cas" version="1.0">
+    <rest name="${project.name}" key="cas" path="/cas" version="1.0">
         <description>Provides confluence avatars.</description>
     </rest>
-    
-    <macro name="casdebuglist" class="com.cutlass.confluence.plugin.macro.CasDebugListMacro" key="casdebuglist" 
-		icon="/download/resources/com.cutlass.confluence.plugin.rest.cas:cas/icon.jpg"
-		documentation-url="https://plugins.atlassian.com/plugin/details/19488">
-        <description>Show the users and their hashes</description>
-	<category name="confluence-content"/>
-	<parameters>
-	</parameters>
-    </macro>
-    
-    <job key="casJob" name="CAS Job" class="com.cutlass.confluence.plugin.job.PopulateMapJob" />
-    <trigger key="casTrigger" name="CAS Trigger">       
-        <job key="casJob" />       
-        <schedule cron-expression="0 0 0 ? * 1 *" />     
-        <managed editable="true" keepingHistory="true" canRunAdhoc="true" canDisable="true" />
-    </trigger>
-    
 </atlassian-plugin>

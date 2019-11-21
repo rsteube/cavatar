@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk
+    steps:
+      - run:
+          name: install maven
+          command: sudo rm -rf /var/lib/apt/lists/* && sudo apt-get update && sudo apt-get install maven
+      - checkout
+      - restore_cache:
+          keys:
+            - cas-{{ checksum "pom.xml" }} 
+      - run:
+          name: build
+          command: mvn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false package
+      - store_artifacts:
+          path: target/cas-2.0.0.jar
+      - save_cache:
+          key: cas-{{ checksum "pom.xml" }} 
+          paths:
+            - ~/.m2
