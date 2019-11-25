@@ -1,8 +1,7 @@
 package com.github.rsteube.cavatar
 
-import com.atlassian.confluence.user.AuthenticatedUserThreadLocal
+import com.atlassian.confluence.user.ConfluenceUser
 import com.atlassian.confluence.user.UserAccessor
-import com.atlassian.plugins.rest.common.security.AnonymousAllowed
 import com.atlassian.spring.container.ContainerManager
 import org.apache.log4j.Logger
 import java.awt.RenderingHints
@@ -16,71 +15,58 @@ import javax.imageio.ImageIO
 import javax.ws.rs.*
 import javax.ws.rs.core.CacheControl
 import javax.ws.rs.core.Response
-import javax.ws.rs.core.Response.Status.UNAUTHORIZED
 
 @Path("/avatar")
-@AnonymousAllowed
 class CasResource {
-    private var log = Logger.getLogger(CasResource::class.java)
-    private fun getScaleFactor(width: Int, height: Int, maxTargetWidth: Int, maxTargetHeight: Int): Double {
-        val widthScaleFactor = maxTargetWidth.toDouble() / width.toDouble()
-        val heightScaleFactor = maxTargetHeight.toDouble() / height.toDouble()
-        return widthScaleFactor.coerceAtMost(heightScaleFactor)
-    }
-
     @GET
     @Path("server/{id}")
     @Throws(IOException::class)
     fun getUsersPlus(@PathParam("id") id: String, @QueryParam("s") @DefaultValue("48") size: Int): Response {
-        if (AuthenticatedUserThreadLocal.get() == null) return Response.status(UNAUTHORIZED).build()
+        LOG.debug("Image requested for [hash: $id, size: $size x $size]")
 
-        log.debug("Image requested for email hash: $id")
-        log.debug("The requested size is: $size x $size")
-        // final String baseUrl = settingsManager.getGlobalSettings().getBaseUrl();
-        val NO_CACHE = CacheControl()
-        NO_CACHE.isNoStore = true
-        NO_CACHE.isNoCache = true
         val hashString = id.split("\\.").toTypedArray()[0]
         val username = HashTranslator.getUsername(hashString.trim { it <= ' ' })
-        log.debug("The user associated with the email hash is: $username")
-        val userAccessor = ContainerManager.getComponent("userAccessor") as UserAccessor
-        val user = userAccessor.getUser(username)
-        val profilePictureInfo = userAccessor.getUserProfilePicture(user)
-        val ct = profilePictureInfo.contentType.replace("image/pjpeg", "image/jpeg")
+        LOG.debug("The user associated with the email hash is: $username")
 
-        var image = ImageIO.read(profilePictureInfo.bytes)
-        var bytes: ByteArray? = null
-        if (image != null) {
-            log.debug("The image was found and is being scaled appropriatly")
-            bytes = scale(image, size, size, ct)
-            log.debug("The image has been scaled")
-        } else {
-            log.debug("The image was not found")
-            val defaultImage = javaClass.classLoader.getResourceAsStream("/images/anonymous.png")
-            image = ImageIO.read(defaultImage)
-            bytes = scale(image, size, size, "image/png")
-            log.debug("The anonymous image has been scaled")
+        val (image, contentType) = profilePicture(userAccessor().getUserByName(username)) ?: defaultPicture().also {
+            LOG.debug("Using defaultPicture for $username")
         }
-        return Response.ok(bytes, ct).cacheControl(NO_CACHE).build()
+        val bytes = image.scale(size, size, contentType)
+        return Response.ok(bytes, contentType).cacheControl(NO_CACHE).build()
     }
 
+    private fun userAccessor() = ContainerManager.getComponent("userAccessor") as UserAccessor
+    private fun profilePicture(user: ConfluenceUser?) = userAccessor().getUserProfilePicture(user)?.let { info -> info.bytes?.let { bytes -> ImageIO.read(bytes)?.let { it to info.contentType.replace("pjpeg", "jpeg") } } }
+    private fun defaultPicture() = ImageIO.read(javaClass.classLoader.getResourceAsStream("/images/anonymous.png")) to "image/png"
+
+    private fun getScaleFactor(width: Int, height: Int, maxTargetWidth: Int, maxTargetHeight: Int) =
+            (maxTargetWidth.toDouble() / width.toDouble()).coerceAtMost(maxTargetHeight.toDouble() / height.toDouble())
+
     @Throws(IOException::class)
-    fun scale(image: BufferedImage?, inHorizontal: Int, inVertical: Int, avatarType: String): ByteArray {
-        val scaleFactor = getScaleFactor(image!!.width, image.height, inHorizontal, inVertical)
-        val image2 = BufferedImage(image.colorModel, image.raster.createCompatibleWritableRaster(
-                inHorizontal, inVertical), image.isAlphaPremultiplied, null)
+    fun BufferedImage.scale(inHorizontal: Int, inVertical: Int, avatarType: String): ByteArray {
+        val scaleFactor = getScaleFactor(width, height, inHorizontal, inVertical)
+        val image2 = BufferedImage(colorModel, raster.createCompatibleWritableRaster(
+                inHorizontal, inVertical), isAlphaPremultiplied, null)
         val baos = ByteArrayOutputStream()
-        // hintMap.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+
         val op = AffineTransformOp(AffineTransform.getScaleInstance(scaleFactor, scaleFactor),
                 RenderingHints(mapOf(
                         KEY_ANTIALIASING to VALUE_ANTIALIAS_ON,
                         KEY_COLOR_RENDERING to VALUE_COLOR_RENDER_QUALITY,
                         KEY_INTERPOLATION to VALUE_INTERPOLATION_BICUBIC
                 )))
-        ImageIO.write(op.filter(image, image2), avatarType.replace("image/".toRegex(), ""), baos)
+        ImageIO.write(op.filter(this, image2), avatarType.replace("image/", ""), baos)
         baos.flush()
         val resultImageAsRawBytes = baos.toByteArray()
         baos.close()
         return resultImageAsRawBytes
+    }
+
+    companion object {
+        val NO_CACHE = CacheControl().apply {
+            isNoStore = true
+            isNoCache = true
+        }
+        val LOG = Logger.getLogger(CasResource::class.java)
     }
 }
