@@ -37,12 +37,12 @@ object HashTranslator {
             val userAccessor = ContainerManager.getComponent("userAccessor") as UserAccessor
             for (user in userAccessor.users) {
                 if (!user.email.isNullOrBlank() && !user.name.isNullOrBlank()) {
-                    if (!userAccessor.getGroupNames(user).contains("jira-users")) {
-                        LOG.debug("Skipping user [${user.name}], because group 'jira-users' is missing")
-                        continue
-                    }
                     if (mailsByUser[user.name] == user.email) {
                         LOG.debug("Skipping user [${user.name}], because email hasn't changed")
+                        continue
+                    }
+                    if (!userAccessor.getGroupNames(user).contains("jira-users")) {
+                        LOG.debug("Skipping user [${user.name}], because group 'jira-users' is missing")
                         continue
                     }
                     with(user.email.toEmailHash()){

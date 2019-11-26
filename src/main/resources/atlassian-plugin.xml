@@ -5,14 +5,6 @@
         <vendor name="${project.organization.name}" />
     </plugin-info>
 
-    <resource type="download" name="0.gif" location="images/0.gif"> 
-		<param name="content-type" value="image/gif"/> 
-    </resource>
-
-    <resource type="download" name="icon.jpg" location="images/icon.jpg">
-                <param name="content-type" value="image/jpeg"/>
-    </resource>
-
     <rest name="${project.name}" key="cas" path="/cas" version="1.0">
         <description>Provides confluence avatars.</description>
     </rest>
