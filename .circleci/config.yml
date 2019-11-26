@@ -14,9 +14,44 @@ jobs:
       - run:
           name: build
           command: mvn -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false package
+      - run:
+          name: move artifact
+          command: mkdir target/artifacts && mv target/cas-*.jar target/artifacts/
       - store_artifacts:
-          path: target/cas-2.0.0.jar
+          path: target/artifacts/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - target/artifacts/
       - save_cache:
           key: cas-{{ checksum "pom.xml" }} 
           paths:
             - ~/.m2
+  publish:
+    docker:
+      - image: circleci/golang:1.12-stretch
+    steps:
+      - run: go get -u github.com/tcnksm/ghr
+      - attach_workspace:
+          at: .
+      - run:
+          name: "Publish Release on GitHub"
+          command: |
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${CIRCLE_TAG} target/artifacts/cas-${CIRCLE_TAG}.jar
+
+workflows:          
+  version: 2
+  build_and_publish:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /.*/
+      - publish:
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              ignore: /.*/
+          requires:
+            - build      
